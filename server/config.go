@@ -6,6 +6,9 @@ import (
 	"net/http"
 	"os"
 
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+
 	"github.com/NYTimes/logrotate"
 	"github.com/go-kit/kit/metrics/provider"
 	"github.com/gorilla/handlers"
@@ -86,6 +89,21 @@ type Config struct {
 	// Metrics config with "Type":"graphite" and this
 	// value in the "Addr" field.
 	GraphiteHost *string `envconfig:"GRAPHITE_HOST"`
+
+	// RPCCreds will enforce credentials for RPC server credentials if set.
+	RPCCreds credentials.TransportCredentials
+	// RPCCodec will overwrite default "proto" marshaling and marshaling of messages if shet.
+	RPCCodec grpc.Codec
+	// RPCCompressor defines the interface gRPC uses to compress a message if set.
+	RPCCompressor grpc.Compressor
+	// RPCCompressor defines the interface gRPC uses to decompress a message if set.
+	RPCDecompressor grpc.Decompressor
+	// RPCUnaryInt provides hook to interceptthe execution of a unary RPC on the server if set.
+	RPCUnaryInt grpc.UnaryServerInterceptor
+	// RPCStreamInt provides hoook to intercept the execution of a streaming RPC on the server.
+	RPCStreamInt grpc.StreamServerInterceptor
+	// Apply a limit on the number of concurrent streams to each ServerTransport.
+	RPCMaxConcurrentStreams uint32
 }
 
 // LoadConfigFromEnv will attempt to load a Server object

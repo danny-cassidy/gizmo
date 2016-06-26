@@ -52,7 +52,7 @@ func NewRPCServer(cfg *Config) *RPCServer {
 	mets := newMetricsProvider(cfg)
 	return &RPCServer{
 		cfg:          cfg,
-		srvr:         grpc.NewServer(),
+		srvr:         makeGRPCServer(cfg),
 		mux:          mx,
 		exit:         make(chan chan error),
 		monitor:      NewActivityMonitor(),
@@ -333,4 +333,38 @@ func registerRPCAccessLogger(cfg *Config) {
 
 	rpcAccessLog = logrus.New()
 	rpcAccessLog.Out = lf
+}
+
+func makeGRPCServer(cfg *Config) *grpc.Server {
+	opts := make([]grpc.ServerOption, 0, 7)
+
+	if cfg.RPCCodec != nil {
+		opts = append(opts, grpc.CustomCodec(cfg.RPCCodec))
+	}
+
+	if cfg.RPCCompressor != nil {
+		opts = append(opts, grpc.RPCCompressor(cfg.RPCCompressor))
+	}
+
+	if cfg.RPCCreds != nil {
+		opts = append(opts, grpc.Creds(cfg.RPCCreds))
+	}
+
+	if cfg.RPCDecompressor != nil {
+		opts = append(opts, grpc.RPCDecompressor(cfg.RPCDecompressor))
+	}
+
+	if cfg.RPCStreamInt != nil {
+		opts = append(opts, grpc.StreamInterceptor(cfg.RPCStreamInt))
+	}
+
+	if cfg.RPCUnaryInt != nil {
+		opts = append(opts, grpc.UnaryInterceptor(cfg.RPCUnaryInt))
+	}
+
+	if cfg.RPCMaxConcurrentStreams > 0 {
+		opts = append(opts, grpc.MaxConcurrentStreams(cfg.RPCMaxConcurrentStreams))
+	}
+
+	return grpc.NewServer(opts...)
 }
